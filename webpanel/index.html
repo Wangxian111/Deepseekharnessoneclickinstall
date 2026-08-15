@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepSeek Harness 控制面板</title>
+<style>
+  :root{
+    --bg:#0f1420; --card:#171e2e; --line:#273349; --fg:#e6edf7; --dim:#8fa3bf;
+    --acc:#4d9fff; --ok:#37d67a; --warn:#ffb454; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  [hidden]{display:none !important;}
+  body{background:var(--bg); color:var(--fg); font:14px/1.6 "Microsoft YaHei", "Segoe UI", sans-serif; padding:24px;}
+  header{max-width:860px; margin:0 auto 18px;}
+  header h1{font-size:22px;}
+  header .sub{color:var(--dim); margin-top:4px;}
+  header .sub a{color:var(--acc); text-decoration:none;}
+  .card{max-width:860px; margin:0 auto 16px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px;}
+  .card h2{font-size:15px; margin-bottom:12px; color:var(--acc);}
+  table{border-collapse:collapse; width:100%; table-layout:fixed;}
+  td{padding:5px 8px; border-bottom:1px solid #202c40; vertical-align:top; word-break:break-all; overflow-wrap:anywhere;}
+  td.k{color:var(--dim); width:175px; white-space:nowrap;}
+  .actions{display:flex; flex-wrap:wrap; gap:10px;}
+  button{background:#243150; color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:9px 14px; font-size:14px; cursor:pointer;}
+  button:hover:not(:disabled){border-color:var(--acc);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  button.primary{background:#1c3a66; border-color:#2c5ca8;}
+  button.danger{background:#4a2020; border-color:#8a3a3a;}
+  button.big{font-size:16px; padding:12px 26px;}
+  button.link{background:none; border:none; color:var(--acc); padding:2px 0; font-size:13px; cursor:pointer;}
+  button.link:hover{text-decoration:underline;}
+  .advHead{display:flex; align-items:center; gap:10px; margin-top:14px;}
+  .hint{display:block; width:100%; color:var(--dim); font-size:12px; line-height:1.5;}
+  .opts{margin-top:10px; border-top:1px dashed var(--line); padding-top:12px; display:flex; flex-direction:column; gap:12px; max-width:560px;}
+  .opts label{display:flex; align-items:flex-start; gap:8px; color:var(--dim); flex-wrap:wrap; font-size:13px;}
+  .opts label input[type=checkbox]{margin-top:2px;}
+  .opts input[type=text], .opts select{padding:6px 8px; border-radius:6px; border:1px solid var(--line); background:#0f1420; color:var(--fg); font-size:13px;}
+  .opts input[type=text]{flex:1; min-width:160px;}
+  .inline{display:inline-flex; align-items:center; gap:8px;}
+  .inline input{width:70px;}
+  pre{background:#0a0e16; border:1px solid var(--line); border-radius:8px; padding:12px; height:280px; overflow:auto; font:12px/1.5 Consolas, monospace; white-space:pre-wrap; word-break:break-all;}
+  .badge{display:inline-block; padding:1px 8px; border-radius:10px; font-size:12px;}
+  .b-ok{background:#12331f; color:var(--ok);}
+  .b-no{background:#3a2626; color:var(--bad);}
+  .b-warn{background:#3a2f1f; color:var(--warn);}
+  .b-run{background:#123342; color:var(--acc);}
+  .progWrap{margin-bottom:10px;}
+  .progLabel{display:flex; justify-content:space-between; font-size:12.5px; color:var(--dim); margin-bottom:5px; gap:12px; flex-wrap:wrap;}
+  .progLabel b{color:var(--fg); font-weight:600;}
+  .progBar{height:16px; background:#0a0e16; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .progFill{height:100%; width:0%; background:linear-gradient(90deg, #1c3a66, var(--acc)); border-radius:8px; transition:width .5s ease;}
+  .progFill.done{background:linear-gradient(90deg, #14532d, var(--ok));}
+  .progFill.err{background:linear-gradient(90deg, #7f1d1d, var(--bad));}
+  .card.notice{background:#101a2b; border:1px solid #2c5ca8; border-left:4px solid var(--warn);}
+  .card.notice h2{color:var(--warn);}
+  .card.notice ol{margin:8px 0 4px 20px; color:var(--fg); line-height:1.9;}
+  .card.notice a{color:var(--acc);}
+  .card.notice .hint{margin-top:8px;}
+  footer{max-width:860px; margin:18px auto 0; color:var(--dim); font-size:12px; text-align:center;}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .spacer{flex:1;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛠 DeepSeek Harness 控制面板</h1>
+  <div class="sub">便携免安装版 · 本地服务（仅本机 127.0.0.1）· <a href="https://github.com/deepseek-ai/deepseek-harness" target="_blank">GitHub 仓库 ↗</a></div>
+</header>
+
+<section class="card notice">
+  <h2>📋 开始前请先准备：DeepSeek API Key</h2>
+  <p>安装完成后，DeepSeek Harness 需要 <b>DeepSeek API Key</b> 才能调用大模型对话。建议在点「开始安装」前先花 2 分钟准备好：</p>
+  <ol>
+    <li>打开 DeepSeek 开放平台：<a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a>，用手机号注册并登录；</li>
+    <li>登录后点左侧菜单 <b>「API Keys」</b>，进入密钥管理页；</li>
+    <li>点 <b>「创建 API Key」</b>，名称随意（如 harness），创建后<b>立即复制并保存</b>——密钥只显示一次，形如 <code>sk-xxxxxxxx</code>；</li>
+    <li>确认账户<b>余额充足</b>：API 按量计费，新用户通常有赠送额度，不够可在「充值」页充值；</li>
+    <li>安装完成后：打开 Web UI → 右上角 <b>Settings → Models</b> → 在 DeepSeek 卡片里粘贴 API Key 并保存，即可开始使用（也支持环境变量 <code>DEEPSEEK_API_KEY</code>）。</li>
+  </ol>
+  <p class="hint">🔒 密钥相当于密码，请勿发给他人；DeepSeek Harness 会以只写引用的形式保存在本机 <code>data\dsh\.credentials.yaml</code>，不会显示明文。</p>
+</section>
+
+<section class="card">
+  <h2>安装状态</h2>
+  <table>
+    <tr><td class="k">便携 Node.js</td><td id="stNode">读取中…</td><td class="k">系统 Node.js</td><td id="stSysNode">读取中…</td></tr>
+    <tr><td class="k">DeepSeek Harness 版本</td><td id="stDsh">读取中…</td><td class="k">pnpm</td><td id="stPnpm">读取中…</td></tr>
+    <tr><td class="k">Web UI</td><td id="stWeb">读取中…</td><td class="k">刷新时间</td><td id="stTime">—</td></tr>
+    <tr><td class="k">程序目录</td><td id="stRoot" colspan="3">—</td></tr>
+    <tr><td class="k">数据目录</td><td id="stHome" colspan="3">—</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>🚀 一键安装 DeepSeek Harness</h2>
+  <div class="row">
+    <button id="btnInstallGo" class="primary big" onclick="runInstall()">🚀 开始安装</button>
+    <span class="dim">默认设置即可完成安装 · 首次约 1~5 分钟（视网速）<br>已安装时再点一次即重新安装</span>
+  </div>
+  <div class="advHead">
+    <button id="btnAdv" class="link" onclick="toggleAdv()">⚙️ 高级选项 <span id="advArrow">▸</span></button>
+    <span class="dim">一般不用动，遇到网络问题或想自定义时再展开</span>
+  </div>
+  <div id="advOpts" class="opts" hidden>
+    <label>npm 软件源（DeepSeek Harness 及其依赖从哪个镜像下载）
+      <select id="regSel">
+        <option value="">自动（npmmirror 优先，失败自动切换）</option>
+        <option value="https://registry.npmmirror.com/">npmmirror.com（国内）</option>
+        <option value="https://repo.huaweicloud.com/repository/npm/">华为云镜像</option>
+        <option value="custom">自定义…</option>
+      </select>
+      <span class="hint">默认自动选择最快可用的源，国内网络一般无需修改；官方源很慢时选 npmmirror。</span>
+    </label>
+    <input type="text" id="regCustom" placeholder="https://registry.example.com/" hidden>
+    <label><input type="checkbox" id="sysNode"> 使用系统 Node（不下载便携版）
+      <span class="hint">勾选后不再下载便携版 Node.js，直接用电脑上已安装的 Node（需满足版本要求 ^22.19.0 或 >=24）。</span>
+    </label>
+    <label><input type="checkbox" id="pnpm"> 同时安装 pnpm（DeepSeek Harness 插件管理需要）
+      <span class="hint">仅在使用 dsh plugin 安装插件时需要；不勾选也能正常使用 Web UI。</span>
+    </label>
+    <label>Node 版本（便携版用哪个版本，留空=自动最新稳定版）
+      <input type="text" id="nodeVer" placeholder="如 22.19.0">
+      <span class="hint">固定便携版 Node 的版本号；留空自动选择最新 v22 LTS。</span>
+    </label>
+  </div>
+</section>
+
+<section class="card" id="progCard" hidden>
+  <h2>安装进度</h2>
+  <div class="progWrap">
+    <div class="progLabel">
+      <span><b id="progText">准备中…</b></span>
+      <span id="progEta"></span>
+    </div>
+    <div class="progBar"><div class="progFill" id="progFill"></div></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>快捷操作</h2>
+  <div class="actions">
+    <div class="inline">🌐 <input id="webPort" value="3080" title="Web UI 端口"> <button id="btnWeb" onclick="startWeb()">启动 Web UI</button></div>
+    <button id="btnDsh" onclick="openDsh()" title="打开命令行窗口，可输入 dsh 命令（dsh 是 DeepSeek Harness 的命令名）">⌨️ 打开 DeepSeek Harness 命令行</button>
+    <button id="btnUpdate" onclick="runUpdate()" title="将 DeepSeek Harness 升级到 npm 上的最新版本（不影响你的数据）">📦 升级 DeepSeek Harness</button>
+    <button id="btnUninstall" class="danger" onclick="runUninstall()">🗑 卸载</button>
+    <button onclick="openFolder('data\\dsh')">📂 打开数据目录</button>
+    <button onclick="openFolder('.')">📁 打开程序目录</button>
+    <button id="btnRefresh" onclick="doRefresh()">🔄 刷新状态</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>日志 <span class="spacer"></span><button id="btnStopJob" onclick="stopJob()" hidden>⏹ 停止任务</button> <button onclick="clearLog()">清空</button></h2>
+  <pre id="logBox">等待操作…</pre>
+</section>
+
+<footer>DeepSeek Harness 便携版控制面板 · 数据保存在 data\dsh · 关闭面板窗口即停止面板服务（不影响已启动的 Web UI）</footer>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+let statusTimer = null, logTimer = null, jobId = null, offset = 0, jobKind = null;
+
+function setT(id, v){ const el = $(id); if (el) el.innerHTML = v; }
+
+function badge(ok, yes, no){ return '<span class="badge ' + (ok ? 'b-ok' : 'b-no') + '">' + (ok ? yes : no) + '</span>'; }
+
+async function refreshStatus(){
+  try{
+    const s = await (await fetch('/api/status')).json();
+    setT('stNode', s.portableNode ? badge(true, '✅ 便携 ' + (s.portableNodeVer || '?'), '') : badge(false, '', '❌ 未下载'));
+    setT('stSysNode', s.systemNode ? badge(true, '✅ ' + (s.systemNodeVer || '?'), '') : badge(false, '', '未检测到'));
+    setT('stDsh', s.dshInstalled ? badge(true, '✅ ' + (s.dshVersion || '?'), '') : badge(false, '', '❌ 未安装'));
+    setT('stPnpm', s.pnpm ? badge(true, '✅ 已安装', '') : badge(false, '', '未安装'));
+    if (s.webRunning && s.dshInstalled) setT('stWeb', '<span class="badge b-run">🟢 运行中</span>');
+    else if (s.webRunning) setT('stWeb', '<span class="badge b-warn">🟠 端口被其他程序占用</span>');
+    else setT('stWeb', '<span class="badge b-no">⚪ 未运行</span>');
+    setT('stTime', s.time);
+    setT('stRoot', s.root);
+    setT('stHome', s.dshHome);
+    const busy = (jobId !== null);
+    $('btnInstallGo').disabled = busy;
+    $('btnWeb').disabled = busy;
+    $('btnDsh').disabled = busy || !s.dshInstalled;
+    $('btnUpdate').disabled = busy || !s.dshInstalled;
+    $('btnUninstall').disabled = busy || !s.dshInstalled;
+  }catch(e){}
+}
+
+$('regSel').addEventListener('change', ()=>{ $('regCustom').hidden = ($('regSel').value !== 'custom'); });
+
+// 手动刷新：给按钮加"刷新中… / ✓ 已刷新"反馈，避免看起来没反应
+async function doRefresh(){
+  const b = $('btnRefresh');
+  if (b.disabled) return;
+  b.disabled = true;
+  b.textContent = '刷新中…';
+  await refreshStatus();
+  b.textContent = '✓ 已刷新';
+  setTimeout(()=>{ b.disabled = false; b.textContent = '🔄 刷新状态'; }, 1200);
+}
+
+function toggleAdv(){
+  const o = $('advOpts');
+  o.hidden = !o.hidden;
+  $('advArrow').textContent = o.hidden ? '▸' : '▾';
+}
+
+async function runInstall(){
+  if (jobId) return;
+  const p = new URLSearchParams();
+  let reg = $('regSel').value;
+  if (reg === 'custom') reg = $('regCustom').value.trim();
+  if (reg) p.set('registry', reg);
+  if ($('sysNode').checked) p.set('system', '1');
+  if ($('pnpm').checked) p.set('pnpm', '1');
+  const nv = $('nodeVer').value.trim();
+  if (nv) p.set('nodeVersion', nv);
+  const d = await (await fetch('/api/install?' + p.toString(), {method:'POST'})).json();
+  jobKind = 'install';
+  startLog(d.job, '开始安装…（视网速约 1~5 分钟，请保持面板窗口打开）\n安装完成后将自动启动 Web UI');
+}
+
+async function runUpdate(){
+  if (jobId) return;
+  const d = await (await fetch('/api/update', {method:'POST'})).json();
+  jobKind = 'update';
+  startLog(d.job, '开始升级…');
+}
+
+async function runUninstall(){
+  if (jobId) return;
+  if (!confirm('确认卸载并删除整个目录（含 data 用户数据）？此操作不可恢复！\n请先关闭正在运行的 Web UI / dsh 命令行窗口。')) return;
+  const d = await (await fetch('/api/uninstall', {method:'POST'})).json();
+  jobKind = 'uninstall';
+  startLog(d.job, '开始卸载…');
+}
+
+async function startWeb(){
+  if (jobId) return;
+  const port = ($('webPort').value || '3080').trim();
+  try{
+    const d = await (await fetch('/api/web/start?port=' + encodeURIComponent(port), {method:'POST'})).json();
+    if (d.ok){
+      alert('已在独立窗口启动 Web UI：\nhttp://127.0.0.1:' + (d.port || port) + '\n关闭该窗口或按 Ctrl+C 停止服务。');
+    } else if (d.needInstall){
+      jobKind = 'install';
+      startLog(d.job, '尚未安装 DeepSeek Harness，正在自动安装…（安装完成后将自动启动 Web UI）');
+    } else {
+      alert('启动失败：' + (d.error || '未知错误'));
+    }
+  }catch(e){ alert('启动失败：' + e.message); }
+}
+
+function openDsh(){ fetch('/api/dsh', {method:'POST'}).catch(()=>{}); }
+function openFolder(p){ fetch('/api/open?path=' + encodeURIComponent(p), {method:'POST'}).catch(()=>{}); }
+
+function startLog(id, msg){
+  clearLog();
+  jobId = id; offset = 0;
+  appendLog('>>> ' + msg + '\n');
+  $('btnStopJob').hidden = false;
+  const pc = $('progCard'); pc.hidden = false;
+  const pf = $('progFill'); pf.className = 'progFill'; pf.style.width = '0%';
+  $('progText').textContent = '准备中…';
+  $('progEta').textContent = '';
+  if (logTimer) clearInterval(logTimer);
+  pollLog();
+  logTimer = setInterval(pollLog, 800);
+  refreshStatus();
+}
+
+function fmtDur(sec){
+  sec = Math.max(0, Math.round(sec));
+  if (sec < 60) return sec + ' 秒';
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ' 分 ' + (s < 10 ? '0' : '') + s + ' 秒';
+}
+
+async function updateProgress(){
+  if (!jobId) return;
+  try{
+    const p = await (await fetch('/api/progress?job=' + jobId)).json();
+    if (!p.found) return;
+    $('progFill').style.width = p.percent + '%';
+    $('progText').textContent = p.label + ' · ' + p.percent + '%';
+    if (p.running){
+      if (p.etaSeconds > 0) $('progEta').textContent = '预计还需约 ' + fmtDur(p.etaSeconds);
+      else $('progEta').textContent = '已用时 ' + fmtDur(p.elapsed) + '，请耐心等待';
+    } else {
+      $('progEta').textContent = '总用时 ' + fmtDur(p.elapsed);
+    }
+  }catch(e){}
+}
+
+function finishProgress(ok){
+  const pf = $('progFill');
+  pf.className = 'progFill ' + (ok ? 'done' : 'err');
+  pf.style.width = '100%';
+  $('progText').textContent = ok ? '完成 ✅' : '失败 ❌（详见日志）';
+}
+
+async function stopJob(){
+  if (!jobId) return;
+  try{
+    await fetch('/api/job/stop?job=' + encodeURIComponent(jobId), {method:'POST'});
+    appendLog('\n>>> 已请求停止任务，等待进程退出…\n');
+  }catch(e){ appendLog('>>> 停止失败：' + e.message + '\n'); }
+}
+
+async function pollLog(){
+  if (!jobId) return;
+  try{
+    const d = await (await fetch('/api/log?job=' + jobId + '&offset=' + offset)).json();
+    if (d.lines){
+      appendLog(d.lines);
+      offset += new TextEncoder().encode(d.lines).length;
+    }
+    await updateProgress();
+    if (d.running === false){
+      if (logTimer){ clearInterval(logTimer); logTimer = null; }
+      $('btnStopJob').hidden = true;
+      const code = (d.exitCode === null ? '未知' : d.exitCode);
+      appendLog('\n>>> 任务结束，退出码: ' + code + (code === 0 ? '  ✅ 操作成功' : '  ❌ 操作失败，请检查上方日志') + '\n');
+      finishProgress(code === 0);
+      // 安装成功后自动启动 Web UI，无需再手动点击
+      if (code === 0 && jobKind === 'install'){
+        const port = ($('webPort').value || '3080').trim();
+        appendLog('\n>>> 安装成功，正在自动启动 Web UI…\n');
+        try{
+          const d2 = await (await fetch('/api/web/start?port=' + encodeURIComponent(port), {method:'POST'})).json();
+          if (d2.ok) appendLog('>>> Web UI 已在独立窗口启动：http://127.0.0.1:' + (d2.port || port) + '（关闭该窗口即停止）\n');
+          else appendLog('>>> 自动启动失败：' + (d2.error || '未知错误') + '，可稍后手动点击「启动 Web UI」。\n');
+        }catch(e){ appendLog('>>> 自动启动失败：' + e.message + '\n'); }
+      } else if (code === 0 && jobId && jobId.startsWith('job-') && (await (await fetch('/api/status')).json()).dshInstalled){
+        appendLog('>>> 已检测到 DeepSeek Harness，可点击「启动 Web UI」开始使用。\n');
+      }
+      jobId = null;
+      jobKind = null;
+      refreshStatus();
+    }
+  }catch(e){}
+}
+
+function appendLog(t){ const b = $('logBox'); b.textContent += t; b.scrollTop = b.scrollHeight; }
+function clearLog(){ $('logBox').textContent = ''; }
+
+refreshStatus();
+statusTimer = setInterval(refreshStatus, 5000);
+resumeRunningJob();
+
+// 页面刷新后自动接回仍在运行的任务（显示日志 + 停止按钮）
+async function resumeRunningJob(){
+  try{
+    const d = await (await fetch('/api/jobs')).json();
+    if (d.jobs && d.jobs.length > 0){
+      const j = d.jobs[d.jobs.length - 1];
+      startLog(j.id, '检测到未完成的任务「' + (j.label || '未知') + '」，正在显示日志（可点 ⏹ 停止任务）…');
+    }
+  }catch(e){}
+}
+</script>
+</body>
+</html>
